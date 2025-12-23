@@ -13,6 +13,7 @@ const AI_CONFIG = {
     }
 };
 
+
 /**
  * Преобразует формат сообщений OpenAI [ {role, content} ] 
  * в формат Google Gemini [ {role, parts: [{text}]} ]

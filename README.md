@@ -1,6 +1,6 @@
 # 🚀 LiveOpenCart Pro Editor
 
-Версия: v104725V
+Версия: v106504V
 
 ## ✨ Фишки
 - 🤖 **AI Assistant**

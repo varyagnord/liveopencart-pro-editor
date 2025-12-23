@@ -1,0 +1,82 @@
+{
+  "manifest_version": 3,
+  "name": "LiveOpenCart Pro Editor",
+  "version": "93115NEW_VER",
+  "description": "Quill.js + Rust WASM + AI Assistant + Smart Screenshots",
+  "icons": {
+    "128": "icon.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://liveopencart.ru/*",
+    "https://s3.opencarter.ru/*",
+    "https://api.imgbb.com/*",
+    "https://api.freeimage.host/*",
+    "https://freeimage.host/*",
+    "https://pixeldrain.com/*",
+    "https://sm.ms/*",
+    "https://img.onl/*",
+    "https://upload.cc/*",
+    "https://img.onl/*",
+    "https://postimages.org/*",
+    "https://telegra.ph/*",
+    "https://uguu.se/*",
+    "https://catbox.moe/*",
+    "https://api.cloudinary.com/*",
+    "https://api.openai.com/*",
+    "https://api.deepseek.com/*",
+    "https://api.easytokens.ru/*",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://liveopencart.ru/*"
+      ],
+      "js": [
+        "blocker.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://liveopencart.ru/pm/*",
+        "https://liveopencart.ru/index.php?route=account/broker/edit_product*",
+        "https://liveopencart.ru/index.php?route=account/broker/edit_product_whatsnew*"
+      ],
+      "js": [
+        "assets/quill.js",
+        "assets/highlight.min.js",
+        "content.js"
+      ],
+      "css": [
+        "assets/atom-one-dark.min.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "pkg/liveopencart_assistant_bg.wasm",
+        "pkg/liveopencart_assistant.js",
+        "assets/quill.snow.css",
+        "assets/quill.js",
+        "assets/highlight.min.js",
+        "assets/atom-one-dark.min.css"
+      ],
+      "matches": [
+        "https://liveopencart.ru/*"
+      ]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

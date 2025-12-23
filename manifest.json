@@ -1,88 +1,82 @@
-project_name := "liveopencart_assistant"
-dist_dir     := "dist"
-public_repo  := "varyagnord/liveopencart-pro-editor"
-
-# Настройки: Fedora + Just + Bash
-set shell := ["bash", "-c"]
-export CARGO_BUILD_JOBS := "32"
-
-# Список доступных команд
-default:
-    @just --list
-
-# --- [ СЕКЦИЯ: РАЗРАБОТКА ] ---
-
-# Быстрая сборка для разработки (dev режим)
-debug: clean compile-debug
-    @echo "🛠 [DEBUG] Готово. Размер WASM:"
-    @du -h pkg/{{project_name}}_bg.wasm
-
-compile-debug:
-    wasm-pack build --target web --dev
-
-# --- [ СЕКЦИЯ: СБОРКА И УПАКОВКА ] ---
-
-# Полный цикл подготовки релиза
-release: package
-    @echo "📦 [RELEASE] Готово: {{project_name}}.zip"
-
-package: clean bump-version compile-release optimize minify generate-readme zip-only
-
-clean:
-    @echo "🧹 Очистка..."
-    rm -rf pkg/ target/ {{dist_dir}} *.zip /tmp/editor_version.txt /tmp/commit_msg.txt
-
-# Повышение версии. Чистый jq без промежуточных echo.
-bump-version:
-    @echo "🔢 Повышаю версию в manifest.json..."
-    @# Обновляем файл и сохраняем новую версию во временный файл для других команд
-    @NEW_V=$$(jq -r '.version | split(".") | .[-1] |= (tonumber + 1 | tostring) | join(".")' manifest.json); \
-    jq ".version = \"$$NEW_V\"" manifest.json > manifest.json.tmp && mv manifest.json.tmp manifest.json; \
-    echo "$$NEW_V" > /tmp/editor_version.txt; \
-    echo "✅ Версия обновлена до: $$NEW_V"
-
-compile-release:
-    wasm-pack build --target web --release
-
-optimize:
-    wasm-opt -Oz --enable-bulk-memory pkg/{{project_name}}_bg.wasm -o pkg/{{project_name}}_bg.wasm
-
-minify:
-    mkdir -p {{dist_dir}}/pkg {{dist_dir}}/assets
-    cp manifest.json icon.png background.js blocker.js {{dist_dir}}/
-    cp assets/* {{dist_dir}}/assets/
-    terser content.js --compress drop_console=true --mangle --comments false -o {{dist_dir}}/content.js
-    terser pkg/{{project_name}}.js --compress --mangle --comments false -o {{dist_dir}}/pkg/{{project_name}}.js
-    cp pkg/{{project_name}}_bg.wasm {{dist_dir}}/pkg/
-
-generate-readme:
-    @V=$$(cat /tmp/editor_version.txt); \
-    echo -e "# 🚀 LiveOpenCart Pro Editor\n\nВерсия: v$$V\n\n## ✨ Фишки\n- 🤖 **AI Assistant**\n- ❝ **Smart Quote**\n- 🎨 **Syntax Highlighting**" > {{dist_dir}}/README.md
-
-zip-only:
-    cd {{dist_dir}} && zip -r ../{{project_name}}.zip . > /dev/null
-
-# --- [ ПУБЛИКАЦИЯ ] ---
-
-# Сборка и отправка на GitHub (Bypass Secrets Mode)
-publish: release
-    @echo "🚀 Публикация на GitHub..."; \
-    V_TAG="v$$(cat /tmp/editor_version.txt)"; \
-    git log -1 --pretty=%B > /tmp/commit_msg.txt; \
-    echo "📦 Релиз: $$V_TAG"; \
-    rm -rf /tmp/publish_repo; \
-    git clone https://github.com/{{public_repo}}.git /tmp/publish_repo; \
-    cp -r {{dist_dir}}/* /tmp/publish_repo/; \
-    cp {{project_name}}.zip /tmp/publish_repo/; \
-    cd /tmp/publish_repo && { \
-        git add .; \
-        git commit -m "Auto-build: $$V_TAG" || echo "Изменений нет"; \
-        git push -o push_options.bypass_secrets=true origin main; \
-    }; \
-    echo "🎁 Создаю релиз $$V_TAG на GitHub..."; \
-    gh release create "$$V_TAG" {{project_name}}.zip \
-        --repo {{public_repo}} \
-        --title "Release $$V_TAG" \
-        --notes-file /tmp/commit_msg.txt || echo "⚠️ Релиз уже существует"; \
-    rm -f /tmp/editor_version.txt /tmp/commit_msg.txt; \
-    echo "🎉 Опубликовано!"
+{
+  "manifest_version": 3,
+  "name": "LiveOpenCart Pro Editor",
+  "version": "",
+  "description": "Quill.js + Rust WASM + AI Assistant + Smart Screenshots",
+  "icons": {
+    "128": "icon.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://liveopencart.ru/*",
+    "https://s3.opencarter.ru/*",
+    "https://api.imgbb.com/*",
+    "https://api.freeimage.host/*",
+    "https://freeimage.host/*",
+    "https://pixeldrain.com/*",
+    "https://sm.ms/*",
+    "https://img.onl/*",
+    "https://upload.cc/*",
+    "https://img.onl/*",
+    "https://postimages.org/*",
+    "https://telegra.ph/*",
+    "https://uguu.se/*",
+    "https://catbox.moe/*",
+    "https://api.cloudinary.com/*",
+    "https://api.openai.com/*",
+    "https://api.deepseek.com/*",
+    "https://api.easytokens.ru/*",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://liveopencart.ru/*"
+      ],
+      "js": [
+        "blocker.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://liveopencart.ru/pm/*",
+        "https://liveopencart.ru/index.php?route=account/broker/edit_product*",
+        "https://liveopencart.ru/index.php?route=account/broker/edit_product_whatsnew*"
+      ],
+      "js": [
+        "assets/quill.js",
+        "assets/highlight.min.js",
+        "content.js"
+      ],
+      "css": [
+        "assets/atom-one-dark.min.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "pkg/liveopencart_assistant_bg.wasm",
+        "pkg/liveopencart_assistant.js",
+        "assets/quill.snow.css",
+        "assets/quill.js",
+        "assets/highlight.min.js",
+        "assets/atom-one-dark.min.css"
+      ],
+      "matches": [
+        "https://liveopencart.ru/*"
+      ]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

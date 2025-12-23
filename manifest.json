@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LiveOpenCart Pro Editor",
-  "version": "102617NEW_V",
+  "version": "103964NEW_V",
   "description": "Quill.js + Rust WASM + AI Assistant + Smart Screenshots",
   "icons": {
     "128": "icon.png"
